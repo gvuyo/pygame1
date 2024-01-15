@@ -1,5 +1,6 @@
 import pygame
 import random
+import os
 
 FPS = 60
 WIDTH = 500
@@ -17,12 +18,21 @@ screen = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("第一個遊戲")
 clock = pygame.time.Clock()
 
+#載入圖片
+background_img = pygame.image.load(os.path.join("img","background.png")).convert()
+player_img = pygame.image.load(os.path.join("img","player.png")).convert()
+rock_img = pygame.image.load(os.path.join("img","rock.png")).convert()
+bullet_img = pygame.image.load(os.path.join("img","bullet.png")).convert()
+
 class Player(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.Surface((50,40))
-        self.image.fill(GREEN)
+        self.image = pygame.transform.scale(player_img, (50,38))
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
+        self.radius = 20
+        #pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
         self.rect.centerx = WIDTH / 2
         self.rect.bottom = HEIGHT - 10
         self.speedx = 8
@@ -43,14 +53,27 @@ class Player(pygame.sprite.Sprite):
 class RocK(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((30,40))
-        self.image.fill(RED)
+        self.image_ori = rock_img
+        self.image_ori.set_colorkey(BLACK)
+        self.image = self.image_ori.copy()
         self.rect = self.image.get_rect()
-        self.rect.x = random.randrange(0,WIDTH - self.rect.width)
+        self.radius = self.rect.width * 0.85 / 2
+        #pygame.draw.circle(self.image, RED, self.rect.center, self.radius)
+        self.rect.x = random.randrange(0, WIDTH - self.rect.width)
         self.rect.y = random.randrange(-100, -40)
-        self.speedy = random.randrange(2,10)
-        self.speedx = random.randrange(-3,3)
+        self.speedy = random.randrange(2, 10)
+        self.speedx = random.randrange(-3, 3)
+        self.total_degree = 0
+        self.rot_degree = random.randrange(-3,3)
+    def rotate(self):
+        self.total_degree += self.rot_degree
+        self.total_degree = self.total_degree % 360
+        self.image = pygame.transform.rotate(self.image_ori, self.total_degree)
+        center = self.rect.center
+        self.rect = self.image.get_rect()
+        self.rect.center = center
     def update(self):
+        self.rotate()
         self.rect.y += self.speedy
         self.rect.x += self.speedx
         if self.rect.top > HEIGHT or self.rect.left > WIDTH or self.rect.right < 0:
@@ -62,8 +85,8 @@ class RocK(pygame.sprite.Sprite):
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y):
         pygame.sprite.Sprite.__init__(self)
-        self.image = pygame.Surface((10,20))
-        self.image.fill(YELLOW)
+        self.image = bullet_img
+        self.image.set_colorkey(BLACK)
         self.rect = self.image.get_rect()
         self.rect.centerx = x
         self.rect.bottom = y
@@ -102,11 +125,12 @@ while running:
         all_sprites.add(rock)
         rocks.add(rock)
 
-    hits = pygame.sprite.spritecollide(player, rocks, False)
+    hits = pygame.sprite.spritecollide(player, rocks, False, pygame.sprite.collide_circle)
     if hits:
         running = False
     # 畫面顯示
     screen.fill(BLACK)
+    screen.blit(background_img, (0,0))
     all_sprites.draw(screen)
     pygame.display.update()
 
