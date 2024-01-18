@@ -14,11 +14,12 @@ YELLOW = (255,255,0)
 
 # 遊戲初始化 and 創建視窗
 pygame.init()
+pygame.mixer.init()
 screen = pygame.display.set_mode((WIDTH,HEIGHT))
 pygame.display.set_caption("第一個遊戲")
 clock = pygame.time.Clock()
 
-#載入圖片
+# 載入圖片
 background_img = pygame.image.load(os.path.join("img","background.png")).convert()
 player_img = pygame.image.load(os.path.join("img","player.png")).convert()
 #rock_img = pygame.image.load(os.path.join("img","rock.png")).convert()
@@ -26,7 +27,18 @@ bullet_img = pygame.image.load(os.path.join("img","bullet.png")).convert()
 rock_imgs = []
 for i in range(7):
     rock_imgs.append(pygame.image.load(os.path.join("img", f"rock{i}.png")).convert())
+
+# 載入音樂
+shoot_sound = pygame.mixer.Sound(os.path.join("sound", "shoot.wav"))
+expl_sound = [
+    pygame.mixer.Sound(os.path.join("sound", "expl0.wav")),
+    pygame.mixer.Sound(os.path.join("sound", "expl1.wav"))
+]
+pygame.mixer.music.load(os.path.join("sound", "background.ogg"))
+pygame.mixer.music.set_volume(0.4)
+
 font_name = pygame.font.match_font('arial')
+
 def draw_text(surf, text, size, x, y):
     font = pygame.font.Font(font_name, size)
     text_surface = font.render(text, True,WHITE)
@@ -61,6 +73,7 @@ class Player(pygame.sprite.Sprite):
         bullet = Bullet(self.rect.centerx, self.rect.top)
         all_sprites.add(bullet)
         bullets.add(bullet)
+        shoot_sound.play()
 class RocK(pygame.sprite.Sprite):
     def __init__(self):
         pygame.sprite.Sprite.__init__(self)
@@ -116,6 +129,7 @@ for i in range(8):
     all_sprites.add(rock)
     rocks.add(rock)
 score = 0
+pygame.mixer.music.play(-1)
 
 # 遊戲迴圈
 running = True
@@ -132,6 +146,7 @@ while running:
     all_sprites.update()
     hits = pygame.sprite.groupcollide(rocks ,bullets, True, True)
     for hit in hits:
+        random.choice(expl_sound).play()
         score += hit.radius
         rock = RocK()
         all_sprites.add(rock)
